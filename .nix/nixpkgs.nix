@@ -1,7 +1,7 @@
 { compiler ? null, nixpkgs ? null}:
 
 let
-  compilerVersion = if isNull compiler then "ghc863" else compiler;
+  compilerVersion = if isNull compiler then "ghc864" else compiler;
   haskellPackagesOverlay = self: super: with super.haskell.lib; {
     haskellPackages = super.haskell.packages.${compilerVersion}.override {
       overrides = hself: hsuper: {
@@ -21,8 +21,8 @@ let
     if isNull nixpkgs
     then
     builtins.fetchTarball {
-      url = "https://github.com/NixOS/nixpkgs/archive/e27e11480323db005ab62ef477eb1fd28b6b62f5.tar.gz";
-      sha256 = "0i64wsl20fl92bsqn900nxmmnr1v3088drbwhwpm9lvln42yf23s";
+      url = "https://github.com/NixOS/nixpkgs/archive/5d6da42cf793cd194cf31bca7193926e7752e51e.tar.gz";
+      sha256 = "1hxghqs31f75rc2p059zfvzkcg41jmhqhpsad42cm2rqf5vj4khz";
     }
     else
     nixpkgs;
