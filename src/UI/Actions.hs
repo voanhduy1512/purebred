@@ -129,6 +129,7 @@ import Control.Lens
         filtered, set, over, preview, view, views, (&), nullOf, firstOf, non,
         Getting, Lens', folded)
 import Control.Concurrent (forkIO)
+import Control.Category ((>>>))
 import Control.Monad ((>=>))
 import Control.Monad.Catch (MonadMask)
 import Control.Monad.Except (runExceptT, MonadError, throwError)
@@ -823,8 +824,8 @@ saveAttachmentToPath =
 
 -- | Chain sequences of actions to create a keybinding
 --
-chain :: Action v ctx AppState -> Action v ctx a -> Action v ctx a
-chain (Action d1 f1) (Action d2 f2) = Action (d1 <> d2) (f1 >=> f2)
+chain :: Action' v ctx a b -> Action' v ctx b c -> Action' v ctx a c
+chain = (>>>)
 
 -- | /Special/ form of chain allowing to sequencing actions registered
 -- for a different view/widget. This is useful to perform actions on

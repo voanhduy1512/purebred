@@ -26,7 +26,7 @@ module Types
   , Tag
   ) where
 
-import Prelude hiding (Word)
+import Prelude hiding ((.), Word)
 
 import GHC.Generics (Generic)
 
@@ -40,6 +40,8 @@ import Brick.Widgets.Dialog (Dialog)
 import Control.DeepSeq (NFData(rnf), force)
 import Control.Lens
 import qualified Data.Map as Map
+import Control.Category
+import Control.Monad ((>=>))
 import Control.Monad.Except (MonadError)
 import Control.Monad.Reader (MonadIO)
 import Control.Concurrent (ThreadId)
@@ -686,14 +688,31 @@ asLocalTime = lens _asLocalTime (\as x -> as { _asLocalTime = x })
 asAsync :: Lens' AppState Async
 asAsync = lens _asAsync (\as x -> as { _asAsync = x })
 
-data Action (v :: ViewName) (ctx :: Name) a = Action
+data Action' (v :: ViewName) (ctx :: Name) a b = Action
     { _aDescription :: [T.Text]
     -- ^ sequential list of things that the action does
-    , _aAction :: AppState -> EventM Name a
+    , _aAction :: a -> EventM Name b
     }
     deriving (Generic, NFData)
 
-aAction :: Getter (Action v ctx a) (AppState -> EventM Name a)
+instance Functor (Action' v ctx s) where
+  fmap f (Action desc g) = Action desc ((fmap . fmap) f g)
+
+instance Applicative (Action' v ctx s) where
+  pure = Action [] . const . pure
+  Action desc1 sff <*> Action desc2 sfa = Action (desc1 <> desc2) $ \s -> sff s <*> sfa s
+
+instance Profunctor (Action' v ctx) where
+  rmap = fmap
+  lmap g (Action desc sfa) = Action desc (lmap g sfa)
+
+instance Category (Action' v ctx) where
+  id = Action [] pure
+  Action d2 f2 . Action d1 f1 = Action (d1 <> d2) (f1 >=> f2)
+
+type Action v ctx = Action' v ctx AppState
+
+aAction :: Getter (Action' v ctx s a) (s -> EventM Name a)
 aAction = to (\(Action _ b) -> b)
 
 data Keybinding (v :: ViewName) (ctx :: Name) = Keybinding
